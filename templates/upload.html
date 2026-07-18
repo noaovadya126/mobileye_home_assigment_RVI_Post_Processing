@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RVI – Upload log</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --card: #1a2332;
+      --text: #e7ecf3;
+      --muted: #9aa8bc;
+      --accent: #3d9cf0;
+      --accent2: #2bb673;
+      --border: #2c3a4f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #1c3b5c 0%, transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, #163528 0%, transparent 50%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 48px 20px 64px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.9rem;
+      letter-spacing: -0.02em;
+    }
+    .sub {
+      color: var(--muted);
+      margin-bottom: 22px;
+      line-height: 1.5;
+    }
+    .card {
+      background: color-mix(in srgb, var(--card) 92%, black);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.35);
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin: 18px 0 8px;
+    }
+    .hint { color: var(--muted); font-size: .9rem; font-weight: 400; }
+    input[type="file"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      background: #121a24;
+      color: var(--text);
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+    button, .btn {
+      appearance: none;
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .primary { background: var(--accent); color: #041018; }
+    .secondary { background: #243247; color: var(--text); border: 1px solid var(--border); }
+    .success { background: var(--accent2); color: #04150c; }
+    .flash {
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(227,93,106,.15);
+      border: 1px solid rgba(227,93,106,.45);
+      color: #ffc1c7;
+    }
+    .note {
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: .9rem;
+      line-height: 1.5;
+    }
+    .banner {
+      margin-bottom: 18px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(43,182,115,.45);
+      background: rgba(43,182,115,.12);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .banner p { margin: 0; color: var(--text); line-height: 1.4; }
+    #busy {
+      display: none;
+      margin-top: 16px;
+      color: var(--accent2);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>RVI Post-Processing</h1>
+    <p class="sub">
+      Upload a BLF log and two DBC files. After processing you are redirected to a
+      local results page with the dashboard, plots, and CSV.
+    </p>
+
+    {% if has_assignment_results %}
+    <div class="banner">
+      <p>
+        <strong>Assignment files already processed.</strong><br />
+        Open the results for the bundled BLF/DBC from the assignment.
+      </p>
+      <a class="btn success" href="{{ url_for('assignment_results') }}">
+        Open assignment results
+      </a>
+    </div>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <div class="card">
+      <form id="upload-form" action="{{ url_for('process') }}" method="post" enctype="multipart/form-data">
+        <label>
+          BLF log file
+          <div class="hint">e.g. Logging_....blf</div>
+        </label>
+        <input type="file" name="blf" accept=".blf" required />
+
+        <label>
+          DBC – Test Track / ESP
+          <div class="hint">ESP_TT_dbc_....dbc</div>
+        </label>
+        <input type="file" name="dbc_esp" accept=".dbc" required />
+
+        <label>
+          DBC – FrameID (ISR mqttToCan)
+          <div class="hint">ISR_mqttToCan_dbc_....dbc</div>
+        </label>
+        <input type="file" name="dbc_isr" accept=".dbc" required />
+
+        <div class="actions">
+          <button class="primary" type="submit">Upload &amp; process</button>
+        </div>
+        <div id="busy">Processing… a large log may take 1–2 minutes. Do not close this page.</div>
+      </form>
+
+      <form action="{{ url_for('use_sample') }}" method="post" style="margin-top:18px">
+        <button class="secondary" type="submit">Re-process sample files from data/</button>
+      </form>
+
+      <p class="note">
+        Local-only UI (127.0.0.1). The existing CLI pipeline and <code>output/</code>
+        folder are kept as-is; this is an additional layer.
+      </p>
+    </div>
+  </div>
+  <script>
+    document.getElementById("upload-form").addEventListener("submit", function () {
+      document.getElementById("busy").style.display = "block";
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RVI – {{ title|default('Results') }}</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --text: #e7ecf3;
+      --muted: #9aa8bc;
+      --accent: #3d9cf0;
+      --border: #2c3a4f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+      background: #121a24;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    h1 { margin: 0; font-size: 1.25rem; }
+    .muted { color: var(--muted); font-size: .9rem; }
+    .bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 14px 22px;
+      border-bottom: 1px solid var(--border);
+      background: #152031;
+    }
+    a.btn {
+      text-decoration: none;
+      background: #243247;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-weight: 600;
+      font-size: .92rem;
+    }
+    a.btn.primary { background: var(--accent); color: #041018; border-color: transparent; }
+    .summary {
+      padding: 14px 22px;
+      color: var(--muted);
+      font-size: .95rem;
+      line-height: 1.55;
+      border-bottom: 1px solid var(--border);
+    }
+    .summary strong { color: var(--text); }
+    iframe {
+      width: 100%;
+      height: calc(100vh - 190px);
+      min-height: 640px;
+      border: 0;
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>{{ title|default('Results') }}</h1>
+      <div class="muted">
+        {% if is_assignment|default(false) %}
+          Source: assignment bundled files (<code>data/</code> -> <code>output/</code>)
+        {% else %}
+          Job: {{ job_id }}
+        {% endif %}
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      {% if not (is_assignment|default(false)) %}
+        <a class="btn" href="{{ url_for('assignment_results') }}">Assignment results</a>
+      {% endif %}
+      <a class="btn" href="{{ url_for('index') }}">New upload</a>
+    </div>
+  </header>
+
+  <div class="bar">
+    {% if has_dashboard %}
+      {% set dash = dashboard_url if dashboard_url is defined and dashboard_url else url_for('plot_file', job_id=job_id, filename='dashboard.html') %}
+      <a class="btn primary" href="{{ dash }}" target="_blank">Open dashboard (full window)</a>
+    {% endif %}
+    {% if has_csv %}
+      {% set csv = csv_url if csv_url is defined and csv_url else url_for('run_file', job_id=job_id, filename='dgps_frameid_export.csv') %}
+      <a class="btn" href="{{ csv }}">Download CSV</a>
+    {% endif %}
+    {% set analysis = analysis_url if analysis_url is defined and analysis_url else url_for('run_file', job_id=job_id, filename='analysis_summary.json') %}
+    <a class="btn" href="{{ analysis }}">analysis JSON</a>
+    {% for name in plot_names %}
+      {% if name != 'dashboard.html' %}
+        {% if is_assignment|default(false) %}
+          <a class="btn" href="{{ url_for('assignment_plot', filename=name) }}" target="_blank">{{ name }}</a>
+        {% else %}
+          <a class="btn" href="{{ url_for('plot_file', job_id=job_id, filename=name) }}" target="_blank">{{ name }}</a>
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  {% if report %}
+  <div class="summary">
+    <strong>Duration:</strong> {{ '%.2f'|format(report.duration_s) }} s
+    &nbsp;|&nbsp;
+    <strong>Merged rows:</strong> {{ report.n_rows }}
+    &nbsp;|&nbsp;
+    <strong>VUT max:</strong>
+    {% if report.VUT_Velocity.max is not none %}{{ '%.2f'|format(report.VUT_Velocity.max) }} m/s{% else %}n/a{% endif %}
+    &nbsp;|&nbsp;
+    <strong>Target max:</strong>
+    {% if report.Target2_Velocity.max is not none %}{{ '%.2f'|format(report.Target2_Velocity.max) }} m/s{% else %}n/a{% endif %}
+    {% if report.frameID.large_jump_events %}
+      &nbsp;|&nbsp;
+      <strong>FrameID jump:</strong>
+      t~{{ report.frameID.large_jump_events[0].t_sec }}s, delta={{ report.frameID.large_jump_events[0].delta }}
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if has_dashboard %}
+    {% set dash = dashboard_url if dashboard_url is defined and dashboard_url else url_for('plot_file', job_id=job_id, filename='dashboard.html') %}
+    <iframe title="dashboard" src="{{ dash }}"></iframe>
+  {% else %}
+    <div class="summary">dashboard.html was not found for this run.</div>
+  {% endif %}
+</body>
+</html>
