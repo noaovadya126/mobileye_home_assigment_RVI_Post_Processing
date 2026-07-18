@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RVI – Processing</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --text: #e7ecf3;
+      --muted: #9aa8bc;
+      --accent: #3d9cf0;
+      --danger: #e35d6a;
+      --border: #2c3a4f;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .card {
+      width: min(520px, 92vw);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      background: #1a2332;
+      text-align: center;
+    }
+    h1 { margin: 0 0 10px; font-size: 1.4rem; }
+    p { color: var(--muted); line-height: 1.5; }
+    .spin {
+      width: 42px;
+      height: 42px;
+      margin: 18px auto;
+      border: 3px solid #2c3a4f;
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: rot 0.8s linear infinite;
+    }
+    @keyframes rot { to { transform: rotate(360deg); } }
+    .err { color: #ffc1c7; display: none; margin-top: 12px; }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Processing sample / upload</h1>
+    <div class="spin" id="spin"></div>
+    <p id="msg">
+      Working on job <strong>{{ job_id }}</strong>.<br />
+      A large BLF typically takes 1–2 minutes. Please wait…
+    </p>
+    <p class="err" id="err"></p>
+    <p><a href="{{ url_for('index') }}">Back to upload</a></p>
+  </div>
+  <script>
+    const jobId = {{ job_id|tojson }};
+    const errEl = document.getElementById("err");
+    const msgEl = document.getElementById("msg");
+    const spinEl = document.getElementById("spin");
+
+    async function poll() {
+      try {
+        const res = await fetch("/api/jobs/" + encodeURIComponent(jobId) + "/status");
+        const data = await res.json();
+        if (data.status === "done") {
+          window.location.href = "/results/" + encodeURIComponent(jobId);
+          return;
+        }
+        if (data.status === "error") {
+          spinEl.style.display = "none";
+          msgEl.textContent = "Processing failed.";
+          errEl.style.display = "block";
+          errEl.textContent = data.error || "Unknown error";
+          return;
+        }
+      } catch (e) {
+        // keep polling through transient errors
+      }
+      setTimeout(poll, 1500);
+    }
+    poll();
+  </script>
+</body>
+</html>

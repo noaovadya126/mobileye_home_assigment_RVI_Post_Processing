@@ -164,25 +164,37 @@
         <input type="file" name="dbc_isr" accept=".dbc" required />
 
         <div class="actions">
-          <button class="primary" type="submit">Upload &amp; process</button>
+          <button class="primary" type="submit" id="upload-btn">Upload &amp; process</button>
         </div>
-        <div id="busy">Processing… a large log may take 1–2 minutes. Do not close this page.</div>
       </form>
 
-      <form action="{{ url_for('use_sample') }}" method="post" style="margin-top:18px">
-        <button class="secondary" type="submit">Re-process sample files from data/</button>
+      <form id="sample-form" action="{{ url_for('use_sample') }}" method="post" style="margin-top:18px">
+        <button class="secondary" type="submit" id="sample-btn">
+          Re-process sample files from data/ (1–2 min)
+        </button>
       </form>
+
+      <div id="busy">Starting job… you will be redirected to a progress page. Keep this tab open.</div>
 
       <p class="note">
-        Local-only UI (127.0.0.1). The existing CLI pipeline and <code>output/</code>
-        folder are kept as-is; this is an additional layer.
+        Tip: for the already-generated assignment results (instant), use
+        <strong>Open assignment results</strong> above.
+        <br /><br />
+        Local-only UI (127.0.0.1). The CLI pipeline and <code>output/</code> folder are kept as-is.
       </p>
     </div>
   </div>
   <script>
-    document.getElementById("upload-form").addEventListener("submit", function () {
-      document.getElementById("busy").style.display = "block";
-    });
+    function armBusy(formId, btnId) {
+      document.getElementById(formId).addEventListener("submit", function () {
+        document.getElementById("busy").style.display = "block";
+        const btn = document.getElementById(btnId);
+        btn.disabled = true;
+        btn.textContent = "Starting…";
+      });
+    }
+    armBusy("upload-form", "upload-btn");
+    armBusy("sample-form", "sample-btn");
   </script>
 </body>
 </html>

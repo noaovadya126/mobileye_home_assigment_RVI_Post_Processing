@@ -844,14 +844,19 @@ This project decodes a Test Track BLF log with DBC files, time-aligns signals, e
 
 ```
 data/                         # BLF + DBC (+ assignment PDF)
-process_blf.py                # Full processing pipeline
-web_app.py                    # Local upload + results UI
-templates/                    # Flask HTML templates (English)
+process_blf.py                # Full processing pipeline (CLI)
+web_app.py                    # Local upload + results UI (Flask)
+templates/                    # English HTML templates
+  upload.html                 # Upload page
+  processing.html             # Progress / wait page
+  results.html                # Dashboard + downloads
 requirements.txt
-output/
-  dgps_frameid_export.csv     # Required merged export
-  analysis_summary.json       # Numeric summary
-  plots/                      # HTML/PNG plots + interactive dashboard
+output/                       # Precomputed CLI results for assignment files
+  dgps_frameid_export.csv
+  analysis_summary.json
+  plots/
+web_uploads/                  # Files saved from the web UI (per job)
+web_runs/                     # Web-generated outputs (per job)
 README.md
 ```
 
@@ -871,22 +876,30 @@ python process_blf.py --blf data/Logging_2026-07-10_12-01-57.blf --out-dir outpu
 ### Local web UI
 
 ```bash
+pip install -r requirements.txt
 python web_app.py
 ```
 
 Then open:
 - Upload page: http://127.0.0.1:5000
-- Precomputed assignment results: http://127.0.0.1:5000/assignment-results
+- Precomputed assignment results (instant): http://127.0.0.1:5000/assignment-results
 
-1. Upload BLF + two DBC files (or re-process sample files from `data/`)
-2. After processing you are redirected to `/results/<job_id>` with dashboard, plots, CSV
-3. New web runs are stored under `web_runs/` (CLI `output/` is unchanged)
+**Web UI flow (all English):**
+
+1. **Open assignment results** – instantly shows the already-computed `output/` dashboard (no re-processing).
+2. **Upload & process** – upload BLF + two DBC files.
+3. **Re-process sample files from data/** – copies bundled `data/` files and runs the pipeline again (~1–2 minutes for a large BLF).
+
+For (2) and (3) the server starts a **background job**, redirects immediately to `/processing/<job_id>` (progress page), then auto-redirects to `/results/<job_id>` when done (dashboard, plots, CSV download).
+
+New web jobs are stored under `web_uploads/` and `web_runs/`. The CLI `output/` folder is left unchanged.
 
 ## Before submission
 
 - Include at least: `process_blf.py`, `web_app.py`, `templates/`, `requirements.txt`, `README.md`, `output/dgps_frameid_export.csv`, `output/plots/`
 - The BLF (~45MB) can be shared via Drive link if email size is limited
 - Make sure reviewers see the **TargetPosLocalX/Y fallback** note below
+- UI language: English only (upload, processing, results pages)
 
 ## Part A – Extract and merge
 

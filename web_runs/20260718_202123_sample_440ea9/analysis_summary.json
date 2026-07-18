@@ -1,0 +1,109 @@
+{
+  "duration_s": 866.41987657547,
+  "n_rows": 112707,
+  "estimated_grid_hz": 100.00009536752259,
+  "estimated_frameid_hz": 28.568439407149086,
+  "decode": {
+    "total_frames": 3438689,
+    "wanted_frames": 466987,
+    "decoded_ok": 466987,
+    "decode_errors": 0,
+    "signals_nonempty": {
+      "frameID": 26068,
+      "VUT_Velocity": 88213,
+      "Target2_Velocity": 88164,
+      "Target2_FW_Distance": 88165,
+      "RangeTimeToCollisionForward": 88165,
+      "VUT_Lat_Meter": 88213,
+      "VUT_Lng_Meter": 88213,
+      "TargetPosLocalX": 88164,
+      "TargetPosLocalY": 88164
+    },
+    "source_used": {
+      "frameID": "primary:0x400/frameID",
+      "VUT_Velocity": "primary:0x603/VUT_Velocity",
+      "Target2_Velocity": "primary:0x703/Target2_Velocity",
+      "Target2_FW_Distance": "primary:0x7B0/Target2_FW_Distance",
+      "RangeTimeToCollisionForward": "primary:0x7B0/RangeTimeToCollisionForward",
+      "VUT_Lat_Meter": "primary:0x60C/VUT_Lat_Meter",
+      "VUT_Lng_Meter": "primary:0x60C/VUT_Lng_Meter",
+      "TargetPosLocalX": "fallback:0x7B4/Target2_Lng_Meter",
+      "TargetPosLocalY": "fallback:0x7B4/Target2_Lat_Meter"
+    },
+    "t_first_abs": 1783684917.432544,
+    "t_last_abs": 1783685799.363399
+  },
+  "VUT_Velocity": {
+    "min": 0.0,
+    "max": 28.42,
+    "mean": 4.0056521391585465,
+    "n": 112591
+  },
+  "Target2_Velocity": {
+    "min": 0.0,
+    "max": 27.92,
+    "mean": 3.6886441189793144,
+    "n": 112591
+  },
+  "Target2_FW_Distance": {
+    "min": -471.79900000000004,
+    "max": 442.225,
+    "mean": 35.352311549666055,
+    "n": 112592
+  },
+  "RangeTimeToCollisionForward": {
+    "min": -32.768,
+    "max": 32.767,
+    "mean": -12.323438610203217,
+    "n": 112592
+  },
+  "frameID": {
+    "count": 26068,
+    "monotonic_non_decreasing": true,
+    "zero_count": 0,
+    "backward_jumps": 0,
+    "large_jumps": 1,
+    "max_delta": 278.0,
+    "min_delta": 1.0,
+    "unique_values": 26068,
+    "first": 297655,
+    "last": 323999,
+    "large_jump_events": [
+      {
+        "t_sec": 0.077,
+        "frameID_before": 297729,
+        "frameID_after": 298007,
+        "delta": 278
+      }
+    ]
+  },
+  "parallel_segments": [
+    {
+      "t_start_s": 107.54,
+      "t_end_s": 114.0,
+      "duration_s": 6.46,
+      "vut_mean_mps": 10.912,
+      "target_mean_mps": 11.109,
+      "lat_sep_mean_m": 0.098
+    },
+    {
+      "t_start_s": 771.129,
+      "t_end_s": 775.58,
+      "duration_s": 4.451,
+      "vut_mean_mps": 27.822,
+      "target_mean_mps": 27.775,
+      "lat_sep_mean_m": 0.393
+    }
+  ],
+  "nan_counts": {
+    "frameID": 0,
+    "VUT_Velocity": 116,
+    "Target2_Velocity": 116,
+    "Target2_FW_Distance": 115,
+    "RangeTimeToCollisionForward": 115,
+    "VUT_Lat_Meter": 116,
+    "VUT_Lng_Meter": 116,
+    "TargetPosLocalX": 115,
+    "TargetPosLocalY": 115
+  }
+}
