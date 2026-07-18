@@ -56,10 +56,10 @@ CSV_COLUMNS = [
 ]
 
 # ---------------------------------------------------------------------------
-# ASSUMPTIONS (not stated as hard requirements in the assignment PDF).
-# Documented again in README under "הנחות יסוד".
+# ASSUMPTIONS (not hard requirements in the assignment PDF).
+# Documented again in README under "Assumptions".
 # ---------------------------------------------------------------------------
-# ASSUMPTION: "נסיעה במקביל" = similar horizontal speeds for a contiguous duration.
+# ASSUMPTION: "parallel motion" = similar horizontal speeds for a contiguous duration.
 PARALLEL_SPEED_DIFF_MPS = 0.5
 PARALLEL_MIN_SPEED_MPS = 1.0
 PARALLEL_MIN_DURATION_S = 2.0
@@ -777,16 +777,16 @@ def format_readme(report: dict) -> str:
 
     def fmt_range(r: dict) -> str:
         if r["n"] == 0 or r["min"] is None:
-            return "אין נתונים"
-        return f"{r['min']:.3f} … {r['max']:.3f} m/s (ממוצע {r['mean']:.3f})"
+            return "no data"
+        return f"{r['min']:.3f} ... {r['max']:.3f} m/s (mean {r['mean']:.3f})"
 
     if segs:
         seg_lines = "\n".join(
-            f"  - {s['t_start_s']:.1f}s–{s['t_end_s']:.1f}s "
-            f"(משך {s['duration_s']:.1f}s, VUT≈{s['vut_mean_mps']:.2f}, "
-            f"Target≈{s['target_mean_mps']:.2f} m/s"
+            f"  - {s['t_start_s']:.1f}s-{s['t_end_s']:.1f}s "
+            f"(duration {s['duration_s']:.1f}s, VUT~{s['vut_mean_mps']:.2f}, "
+            f"Target~{s['target_mean_mps']:.2f} m/s"
             + (
-                f", הפרש צידי ממוצע≈{s['lat_sep_mean_m']:.2f} m"
+                f", mean lateral sep~{s['lat_sep_mean_m']:.2f} m"
                 if s.get("lat_sep_mean_m") is not None
                 else ""
             )
@@ -794,25 +794,26 @@ def format_readme(report: dict) -> str:
             for s in segs
         )
         parallel_text = (
-            f"כן (לפי **הנחת יסוד** לזיהוי מקביליות – לא הגדרה מהמפרט). "
-            f"קטעים ≥{PARALLEL_MIN_DURATION_S}s:\n{seg_lines}"
+            f"Yes (per our **assumption** for parallel detection — not a PDF-defined metric). "
+            f"Segments >= {PARALLEL_MIN_DURATION_S}s:\n{seg_lines}"
         )
     else:
         parallel_text = (
-            f"לא זוהו קטעים לפי **הנחת היסוד** "
-            f"(הפרש מהירות ≤{PARALLEL_SPEED_DIFF_MPS} m/s, "
-            f"מהירות ≥{PARALLEL_MIN_SPEED_MPS} m/s, "
-            f"הפרש צידי ≤{PARALLEL_LAT_DIFF_M} m, משך ≥{PARALLEL_MIN_DURATION_S}s)."
+            f"No segments found under our **assumption** "
+            f"(speed diff <= {PARALLEL_SPEED_DIFF_MPS} m/s, "
+            f"speed >= {PARALLEL_MIN_SPEED_MPS} m/s, "
+            f"lateral sep <= {PARALLEL_LAT_DIFF_M} m, duration >= {PARALLEL_MIN_DURATION_S}s)."
         )
 
-    mono = "כן" if fid.get("monotonic_non_decreasing") else "לא"
+    mono = "Yes" if fid.get("monotonic_non_decreasing") else "No"
     if events:
         jump_detail = "; ".join(
-            f"ב־t≈{e['t_sec']:.1f}s: {e['frameID_before']}→{e['frameID_after']} (Δ={e['delta']})"
+            f"at t~{e['t_sec']:.1f}s: {e['frameID_before']}->{e['frameID_after']} "
+            f"(delta={e['delta']})"
             for e in events
         )
     else:
-        jump_detail = "לא זוהו קפיצות גדולות"
+        jump_detail = "no large jumps detected"
 
     duration = report["duration_s"]
     hz = report["estimated_grid_hz"]
@@ -820,39 +821,43 @@ def format_readme(report: dict) -> str:
     src = report["decode"].get("source_used") or {}
     target_src = src.get("TargetPosLocalX", "n/a")
 
-    analysis = f"""## ניתוח וממצאים
+    analysis = f"""## Analysis and findings
 
-- משך ההקלטה הכולל: **{duration:.2f} s** (~{duration/60:.2f} דקות). קצב הגריד הממוזג: **~{hz:.1f} Hz**. קצב FrameID הגולמי בלוג: **~{fid_hz:.1f} Hz** — נמוך מהנומינלי 100 Hz שב-DBC/PDF (ממצא חשוב לבדיקת sync/logging).
-- טווח מהירות VUT: **{fmt_range(vut)}**.
-- טווח מהירות Target: **{fmt_range(tgt)}**.
-- נסיעה במקביל: {parallel_text}
-- FrameID מונוטוני לא-יורד? **{mono}**. קפיצות לאחור={fid.get('backward_jumps', 0)}, קפיצות גדולות(>{FRAMEID_LARGE_JUMP})={fid.get('large_jumps', 0)}, ערכי 0={fid.get('zero_count', 0)}. חורים/קפיצות: {jump_detail}. טווח: {fid.get('first')} → {fid.get('last')} ({fid.get('count')} דגימות גולמיות).
-- **TargetPosLocalX/Y (חשוב להגשה):** הודעת CAN הראשית `0x70C` / `TargetPosLocal` **לא הופיעה בלוג** (0 פריימים). העמודות מולאו ב-fallback מתועד מ-`0x7B4` (`{target_src}`). זה פתרון הנדסי לשמירת שלמות ה-CSV — לא הסיגנל הראשי מהמפרט.
-- שגיאות פענוח: {report['decode'].get('decode_errors')} מתוך {report['decode'].get('wanted_frames')} פריימים רלוונטיים.
+- Total recording duration: **{duration:.2f} s** (~{duration/60:.2f} min). Merged grid rate: **~{hz:.1f} Hz**. Raw FrameID rate in the log: **~{fid_hz:.1f} Hz** — below the nominal 100 Hz from the DBC/PDF (important sync/logging finding).
+- VUT speed range: **{fmt_range(vut)}**.
+- Target speed range: **{fmt_range(tgt)}**.
+- Parallel motion: {parallel_text}
+- FrameID non-decreasing? **{mono}**. Backward jumps={fid.get('backward_jumps', 0)}, large jumps(>{FRAMEID_LARGE_JUMP})={fid.get('large_jumps', 0)}, zeros={fid.get('zero_count', 0)}. Gaps/jumps: {jump_detail}. Range: {fid.get('first')} -> {fid.get('last')} ({fid.get('count')} raw samples).
+- **TargetPosLocalX/Y (important for review):** primary CAN message `0x70C` / `TargetPosLocal` **was absent from this log** (0 frames). Columns were filled via documented fallback from `0x7B4` (`{target_src}`). This keeps CSV completeness; it is not the primary DBC signal.
+- Decode errors: {report['decode'].get('decode_errors')} of {report['decode'].get('wanted_frames')} relevant frames.
 """
     return analysis
 
 
 def build_readme(report: dict) -> str:
     analysis = format_readme(report)
-    return f"""# RVI Home Assignment – Post-Processing של לוג Test Track (BLF)
+    return f"""# RVI Home Assignment – Test Track BLF Post-Processing (dGPS + FrameID)
 
-משימה זו מדמה תהליך Post-Processing של נתוני מסלול ניסוי: פענוח BLF+DBC, מיזוג על ציר זמן, ויזואליזציה והפקת תובנות.
+This project decodes a Test Track BLF log with DBC files, time-aligns signals, exports a merged CSV, builds visualizations, and serves a local upload UI.
 
-## מבנה הפרויקט
+## Project layout
 
 ```
-data/                         # BLF + DBC (+ PDF הנחיות)
-process_blf.py                # צינור עיבוד מלא
+data/                         # BLF + DBC (+ assignment PDF)
+process_blf.py                # Full processing pipeline
+web_app.py                    # Local upload + results UI
+templates/                    # Flask HTML templates (English)
 requirements.txt
 output/
-  dgps_frameid_export.csv     # ייצוא ממוזג (חובה)
-  analysis_summary.json       # סיכום מספרי לניתוח
-  plots/                      # גרפים HTML/PNG + דשבורד אינטראקטיבי
+  dgps_frameid_export.csv     # Required merged export
+  analysis_summary.json       # Numeric summary
+  plots/                      # HTML/PNG plots + interactive dashboard
 README.md
 ```
 
-## הרצה
+## How to run
+
+### CLI
 
 ```bash
 pip install -r requirements.txt
@@ -863,18 +868,32 @@ python process_blf.py
 python process_blf.py --blf data/Logging_2026-07-10_12-01-57.blf --out-dir output
 ```
 
-## לפני הגשה (אריזה)
+### Local web UI
 
-- להגיש לפחות: `process_blf.py`, `requirements.txt`, `README.md`, `output/dgps_frameid_export.csv`, `output/plots/` (HTML+PNG).
-- קובץ ה-BLF (~45MB) אפשר לשלוח בקישור Drive (כמו במייל המקורי) במקום לצרף למייל — אלא אם התבקש במפורש לצרף את הקובץ.
-- לוודא שהבדיקה רואה את ההערה הבולטת על **fallback של TargetPosLocalX/Y**.
+```bash
+python web_app.py
+```
 
-## חלק א' – חילוץ ומיזוג
+Then open:
+- Upload page: http://127.0.0.1:5000
+- Precomputed assignment results: http://127.0.0.1:5000/assignment-results
 
-### מקורות DBC
+1. Upload BLF + two DBC files (or re-process sample files from `data/`)
+2. After processing you are redirected to `/results/<job_id>` with dashboard, plots, CSV
+3. New web runs are stored under `web_runs/` (CLI `output/` is unchanged)
 
-| עמודה | DBC | CAN ID | הודעה |
-|-------|-----|--------|-------|
+## Before submission
+
+- Include at least: `process_blf.py`, `web_app.py`, `templates/`, `requirements.txt`, `README.md`, `output/dgps_frameid_export.csv`, `output/plots/`
+- The BLF (~45MB) can be shared via Drive link if email size is limited
+- Make sure reviewers see the **TargetPosLocalX/Y fallback** note below
+
+## Part A – Extract and merge
+
+### DBC sources
+
+| CSV column | DBC | CAN ID | Message |
+|------------|-----|--------|---------|
 | frameID | ISR_mqttToCan_dbc_251210.dbc | 0x400 (1024) | mqtt_to_can_bridge_... |
 | VUT_Velocity | ESP_TT_dbc_250427.dbc | 1539 | Velocity |
 | Target2_Velocity | ESP_TT_dbc_250427.dbc | 1795 | TargetVelocity |
@@ -882,63 +901,63 @@ python process_blf.py --blf data/Logging_2026-07-10_12-01-57.blf --out-dir outpu
 | VUT_Lat_Meter, VUT_Lng_Meter | ESP_TT_dbc_250427.dbc | 1548 | PosLocal |
 | TargetPosLocalX, TargetPosLocalY | ESP_TT_dbc_250427.dbc | 1804 (primary) / 1972 (fallback) | TargetPosLocal / RangeTargetPosLocal |
 
-> **הערה בולטת:** בלוג זה `TargetPosLocal` (1804) חסר לחלוטין. העמודות `TargetPosLocalX/Y` ב-CSV מולאו מ-`Target2_Lng_Meter` / `Target2_Lat_Meter` (1972). שמות העמודות נשמרו כנדרש במפרט.
+> **Important note:** In this log, `TargetPosLocal` (1804) is completely missing. CSV columns `TargetPosLocalX/Y` were filled from `Target2_Lng_Meter` / `Target2_Lat_Meter` (1972). Required column names were preserved.
 
-### timestamp_sec – יחסי או מוחלט?
+### timestamp_sec – relative or absolute?
 
-**יחסי.** `timestamp_sec = timestamp_abs_CAN - t_first`, כאשר `t_first` הוא חותמת הזמן של פריים ה-CAN הראשון בלוג. הזמן המוחלט נשמר פנימית בלבד למיזוג.
+**Relative.** `timestamp_sec = timestamp_abs_CAN - t_first`, where `t_first` is the first CAN frame timestamp in the log. Absolute time is kept internally only for merging.
 
-### גישת Time Alignment
+### Time alignment approach
 
-נבחר **`pandas.merge_asof(..., direction="backward")` על גריד ~10 ms**:
+We use **`pandas.merge_asof(..., direction="backward")` on a ~10 ms grid**:
 
-1. בונים ציר זמן צפוף (חותמות FrameID + גריד סינתטי 10 ms).
-2. לכל סיגנל מחברים את **הערך האחרון הידוע** בזמן ≤ לנקודת הגריד.
-3. מסירים שורות ריקות לחלוטין, ואז גוזמים שורות פתיחה שבהן יש רק FrameID בלי DGPS (ייצוא נקי יותר). `timestamp_sec` נשאר יחסי לתחילת הלוג.
+1. Build a dense timeline (FrameID timestamps + synthetic 10 ms grid).
+2. For each signal, attach the **last known value** at time <= grid point.
+3. Drop fully empty rows, then (for CSV export only) trim leading FrameID-only rows before the first DGPS sample. `timestamp_sec` stays relative to log start.
 
-### מקרי קצה שטופלו בקוד
+### Edge cases handled
 
-- payload קצר / כשל פענוח → נספר ומדולג
-- CAN IDs לא רלוונטיים → מדולגים (סטרימינג)
-- כפילויות על אותה חותמת זמן → ערך אחרון
-- סיגנל חסר → NaN / fallback מתועד
-- `frameID == 0` → נשמר ומדווח
-- קפיצות FrameID → מזוהות עם **זמן יחסי מדויק** ומסומנות בגרף
-- `frameID` מיוצא כמספר שלם (Int) ב-CSV
+- short payload / decode failure -> counted and skipped
+- unrelated CAN IDs -> skipped (streaming)
+- duplicate timestamps -> last value kept
+- missing signal -> NaN / documented fallback
+- `frameID == 0` -> kept and reported
+- FrameID jumps -> detected with exact relative time and marked on plots
+- `frameID` exported as integer in CSV
 
-## חלק ב' – ויזואליזציה
+## Part B – Visualization
 
-בתיקייה `output/plots/`:
+In `output/plots/`:
 
-1. `01_velocities.html/.png` – מהירות VUT מול Target (+ סימון קטעי parallel*)
-2. `02_forward_distance.html/.png` – מרחק קדמי
-3. `03_ttc_forward.html/.png` – TTC קדמי
-4. `04_frameid_monotonicity.html/.png` – מונוטוניות FrameID (+ annotation לקפיצות)
-5. `dashboard.html/.png` – ארבעת הגרפים יחד (Plotly Zoom/Pan)
-6. `05_trajectories.html` – בונוס: מסלולי XY
+1. `01_velocities.html/.png` – VUT vs Target speed (+ parallel* bands)
+2. `02_forward_distance.html/.png` – forward distance
+3. `03_ttc_forward.html/.png` – forward TTC
+4. `04_frameid_monotonicity.html/.png` – FrameID (+ jump annotations)
+5. `dashboard.html/.png` – all four plots together (Plotly zoom/pan)
+6. `05_trajectories.html` – bonus local XY trajectories
 
-הסימון `parallel*` בגרפים מבוסס על **הנחת יסוד** (ראו למטה), לא על דרישה מהמפרט.
+The `parallel*` markers are based on an **assumption** (see below), not a PDF hard requirement.
 
 {analysis}
 
-## הנחות יסוד (לא דרישות מהמפרט)
+## Assumptions (not PDF hard requirements)
 
-> כל סעיף כאן הוא **הנחה שלנו לצורך ניתוח/יישום**. זה **אינו** מופיע כדרישה מחייבת ב-PDF.
+> Each item below is **our assumption for analysis/implementation**. It is **not** a mandatory requirement in the assignment PDF.
 
-1. **נסיעה במקביל** – הנחה: הפרש מהירות אופקית ≤ `{PARALLEL_SPEED_DIFF_MPS} m/s`, מהירות מינימלית `{PARALLEL_MIN_SPEED_MPS} m/s`, הפרש צידי מקומי `|VUT_Lat_Meter - TargetPosLocalY| ≤ {PARALLEL_LAT_DIFF_M} m`, ומשך רציף ≥ `{PARALLEL_MIN_DURATION_S} s`. המפרט שואל אם יש קטעים כאלה אך לא מגדיר סף מספרי.
-2. **סף קפיצת FrameID** – הנחה: `Δ > {FRAMEID_LARGE_JUMP}` נחשב חור/sync-drop לדיווח. המפרט מציין שקפיצות גדולות חשודות, בלי סף מספרי.
-3. **גריד 10 ms** – הנחה יישומית התואמת את התדר הנומינלי ~100 Hz שבמפרט FrameID; בחירת המיזוג עצמה (`merge_asof`) היא אחת מהאפשרויות שהמפרט מציע במפורש.
-4. **fallback ל-TargetPosLocal** – הנחה הנדסית כשהודעת 1804 חסרה בלוג: שימוש ב-1972 תחת אותם שמות עמודות נדרשים. הדרישה היא שמות העמודות ב-CSV; מקור ה-CAN המדויק ל-1804 לא היה זמין בלוג זה.
-5. **גזירת שורות פתיחה ללא DGPS** – הנחה לייצוא נקי יותר; לא נדרש במפרט.
+1. **Parallel motion** – assumption: horizontal speed difference <= `{PARALLEL_SPEED_DIFF_MPS} m/s`, min speed `{PARALLEL_MIN_SPEED_MPS} m/s`, local lateral separation `|VUT_Lat_Meter - TargetPosLocalY| <= {PARALLEL_LAT_DIFF_M} m`, contiguous duration >= `{PARALLEL_MIN_DURATION_S} s`. The PDF asks whether such segments exist but does not define numeric thresholds.
+2. **FrameID jump threshold** – assumption: `delta > {FRAMEID_LARGE_JUMP}` is reported as a hole/sync-drop. The PDF says large jumps are suspicious, without a numeric threshold.
+3. **10 ms grid** – implementation choice aligned with the nominal ~100 Hz FrameID rate; `merge_asof` itself is one of the approaches suggested in the PDF.
+4. **TargetPosLocal fallback** – engineering assumption when message 1804 is missing: use 1972 under the required CSV column names.
+5. **Trim leading FrameID-only rows in CSV** – cleanliness assumption; not required by the PDF.
 
-### הערות לפרשנות
+### Interpretation notes
 
-- TTC יכול להיות שלילי/רווי כשאין התקרבות אמיתית — לבחון יחד עם המרחק הקדמי.
-- קצב FrameID הגולמי (~עשרות Hz) נמוך מהנומינלי 100 Hz — ייתכן דילול בלוגר/שידור; הגריד הממוזג נשאר ~100 Hz.
+- TTC can be negative/saturated when there is no real closing scenario — inspect together with forward distance.
+- Raw FrameID rate (~tens of Hz) is below nominal 100 Hz — possible logger/broadcast thinning; the merged grid remains ~100 Hz.
 
-## תלויות
+## Dependencies
 
-ראה `requirements.txt` (python-can, cantools, pandas, numpy, plotly, matplotlib).
+See `requirements.txt` (python-can, cantools, pandas, numpy, plotly, matplotlib, flask).
 """
 
 
