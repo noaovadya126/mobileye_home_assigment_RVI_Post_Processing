@@ -1,0 +1,62 @@
+VERSION "1.0"
+
+NS_ :
+    NS_DESC_
+    CM_
+    BA_DEF_
+    BA_
+    VAL_
+    CAT_DEF_
+    CAT_
+    FILTER
+    BA_DEF_DEF_
+    BA_DEF_DEF_REL_
+    BA_DEF_SGTYPE_
+    BA_SGTYPE_
+    SIGTYPE_VAL_
+    SG_MUL_VAL_
+    BA_DEF_REL_
+    BA_REL_
+    BU_SG_REL_
+    BU_EV_REL_
+    BU_BO_REL_
+    SGTYPE_
+    SGTYPE_VAL_
+    SIG_GROUP_
+    SIGTYPE_VALTYPE_
+    SIG_VALTYPE_
+    SIG_GROUPTYPE_
+    SGTYPE_REDUCED_
+
+BS_:
+
+BU_: PCAN_Router_Pro_FD mqtt_to_can_bridge_1_2_3_NODE
+
+BO_ 1024 mqtt_to_can_bridge_1_2_3_bridge_1_2_3_Bridge: 8 PCAN_Router_Pro_FD
+ SG_ frameID :  0|28@1+ (1,0) [0|268435455]    ""               PCAN_Router_Pro_FD
+ SG_ Year    : 28| 7@1+ (1,0) [0|99]            "years since 2000" CAN_NODE
+ SG_ Month   : 35| 4@1+ (1,0) [1|12]            ""               CAN_NODE
+ SG_ Day     : 39| 5@1+ (1,0) [1|31]            ""               CAN_NODE
+ SG_ Hour    : 44| 5@1+ (1,0) [0|23]            ""               CAN_NODE
+ SG_ Minute  : 49| 6@1+ (1,0) [0|59]            ""               CAN_NODE
+ SG_ Second  : 55| 6@1+ (1,0) [0|59]            ""               CAN_NODE
+
+CM_ BO_ 1024 "MQTT to CAN Bridge (0x400) - Transmitted every 10ms with latest Frame ID and session timestamp from GetSessionInfo";
+CM_ SG_ 1024 frameID "Latest Frame ID extracted from MQTT JSON messages. Updated when new MQTT data arrives. Value 0 indicates no frame available or JSON parsing failure.";
+CM_ SG_ 1024 Year "Session year from GetSessionInfo (years since 2000). Extracted from session name format: Project_Car-Name_YYMMDD_hhmmss_nevermind";
+CM_ SG_ 1024 Month "Session month from GetSessionInfo. Extracted from session name format: Project_Car-Name_YYMMDD_hhmmss_nevermind";
+CM_ SG_ 1024 Day "Session day from GetSessionInfo. Extracted from session name format: Project_Car-Name_YYMMDD_hhmmss_nevermind";
+CM_ SG_ 1024 Hour "Session hour from GetSessionInfo. Extracted from session name format: Project_Car-Name_YYMMDD_hhmmss_nevermind";
+CM_ SG_ 1024 Minute "Session minute from GetSessionInfo. Extracted from session name format: Project_Car-Name_YYMMDD_hhmmss_nevermind";
+CM_ SG_ 1024 Second "Session second from GetSessionInfo. Extracted from session name format: Project_Car-Name_YYMMDD_hhmmss_nevermind";
+
+BA_DEF_ SG_ "GenSigStartValue" FLOAT 0 1;
+BA_ "GenSigStartValue" SG_ 1024 frameID 0;
+BA_ "GenSigStartValue" SG_ 1024 Year 25;
+BA_ "GenSigStartValue" SG_ 1024 Month 7;
+BA_ "GenSigStartValue" SG_ 1024 Day 14;
+BA_ "GenSigStartValue" SG_ 1024 Hour 22;
+BA_ "GenSigStartValue" SG_ 1024 Minute 34;
+BA_ "GenSigStartValue" SG_ 1024 Second 41;
+
+VAL_ 1024 frameID 0 "No_Frame_Available"; 
